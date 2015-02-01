@@ -1,39 +1,20 @@
-type id = string
+use "slp.sml";
 
-datatype binop = Plus | Minus | Times | Div
-
-datatype stm = CompoundStm of stm * stm
-	     | AssignStm of id * exp
-	     | PrintStm of exp list
-
-     and exp = IdExp of id
-	     | NumExp of int
-             | OpExp of exp * binop * exp
-             | EseqExp of stm * exp
-val prog = 
- CompoundStm(AssignStm("a",OpExp(NumExp 5, Plus, NumExp 3)),
-  CompoundStm(AssignStm("b",
-      EseqExp(PrintStm[IdExp"a",OpExp(IdExp"a", Minus,NumExp 1)],
-           OpExp(NumExp 10, Times, IdExp"a"))),
-   PrintStm[IdExp "b"]))
-
-exception Unbound;
-
-fun lookup ([],_) = 0 (*Como se pone raise aqui para que funcione?*)
-	| lookup((primerid,valor)::resto,id) = if primerid=id 
+fun lookup ([]:table,_:id) = 0 (*Como se pone raise aqui para que funcione?*)
+	| lookup((primerid,valor)::resto : table,id:id) = if primerid=id 
 										then valor 
 									   else lookup(resto,id);
 
 fun update (id,value,env) = (id,value)::env;
 
-
+(*Tests*)
 val env = [("b",5),("a",~18)];
 val env = update("b",3,env);
 lookup(env,"foo"); 
 lookup(env,"a");
 lookup(env,"x");
 
-
+(*interpreter*)
 fun interpStm (AssignStm (id,exp),env) = update(id,interpExp (exp,env),env)
 	| interpStm _ = []
 and interpExp (IdExp id,env) = lookup(env,id) 
