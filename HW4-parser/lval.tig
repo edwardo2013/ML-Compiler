@@ -1,0 +1,9 @@
+let
+var a := 5
+var s := b[10] of 0
+in
+  s + a;
+  a + b
+end
+
+(5; "h")
