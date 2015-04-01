@@ -67,6 +67,13 @@ exp: exp MINUS exp		(A.OpExp {left=exp1, oper=A.MinusOp, right=exp2, pos=MINUSle
 exp: exp TIMES exp		(A.OpExp {left=exp1, oper=A.TimesOp, right=exp2, pos=TIMESleft})
 exp: exp DIVIDE exp		(A.OpExp {left=exp1, oper=A.DivideOp, right=exp2, pos=DIVIDEleft})
 
+exp: exp EQ exp   (A.OpExp {left=exp1, oper=A.EqOp, right=exp2, pos=exp1left})
+exp: exp NEQ exp   (A.OpExp {left=exp1, oper=A.NeqOp, right=exp2, pos=exp1left})
+exp: exp LE exp   (A.OpExp {left=exp1, oper=A.LeOp, right=exp2, pos=exp1left})
+exp: exp LT exp   (A.OpExp {left=exp1, oper=A.LtOp, right=exp2, pos=exp1left})
+exp: exp GE exp   (A.OpExp {left=exp1, oper=A.GeOp, right=exp2, pos=exp1left})
+exp: exp GT exp   (A.OpExp {left=exp1, oper=A.GtOp, right=exp2, pos=exp1left})
+
 exp: lvalue ASSIGN exp (A.AssignExp {var=lvalue, exp=exp, pos=lvalueleft})
 
 (* let *)

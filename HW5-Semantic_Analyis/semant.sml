@@ -47,6 +47,10 @@ struct
     | SOME t => actual_ty t)
     | actual_ty t = t  (*give the type t as the result*)
 
+  (* checks if the given type is a string, returns unit or an error- also unit. Used for comparison operators*)
+  fun checkString({ty=Types.STRING,exp = _}, pos) = ()  
+  | checkString ({ty=_,exp=_},pos) = ErrorMsg.error pos "string required" 
+
   (* checks if the given type is an integer, returns unit or an error- also unit*)
   fun checkInt ({ty=Types.INT, exp=_}, pos) = ()
   | checkInt ({ty=_,exp=_},pos) = ErrorMsg.error pos "integer required"
@@ -62,10 +66,34 @@ struct
   (* translate a exp - type checking the hard work is here*)
   and transExp(venv:venv,tenv:tenv) : A.exp -> expty =
 
-    let fun trexp (A.OpExp{left, oper, right, pos}) = (*TODO comparison operators*)
-      (checkInt (trexp left, pos);
-       checkInt (trexp right, pos);
-       {ty=Types.INT, exp=()})
+    let fun trexp (A.OpExp{left, oper, right, pos}) =
+
+      if oper = A.PlusOp orelse oper = A.MinusOp orelse oper = A.TimesOp orelse oper = A.DivideOp then
+        (checkInt (trexp left, pos);
+        checkInt (trexp right, pos);
+        {ty=Types.INT, exp=()})
+
+      else if oper = A.EqOp orelse oper = A.NeqOp orelse oper = A.LeOp orelse oper = A.LtOp 
+              orelse oper = A.GeOp orelse oper = A.GtOp then
+         let
+            val l = trexp left
+            val r = trexp right
+          in
+            (case #ty l of
+              Types.INT =>
+                (checkInt(l, pos);
+                checkInt(r, pos);
+                {ty=Types.INT,exp= ()})
+             | Types.STRING =>
+                (checkString(l, pos);
+                checkString(r, pos);
+                {ty=Types.INT,exp= ()}) (*should be int because a comparison is 1 or 0 *)  
+             | _ => (ErrorMsg.error pos "can't perform comparisons on this type";
+                  {ty=Types.INT, exp= ()}))
+           end 
+      (*this case should never be executed, only if we have an operand that we dont know*)     
+      else (ErrorMsg.error pos "Error";{exp= (), ty=Types.INT})
+
        | trexp (A.VarExp var) = trvar (var) (*Added var exp, see trvar function*)
        | trexp (A.IntExp _) = {ty=Types.INT, exp=()}
        | trexp (A.StringExp (_,_)) = {ty=Types.STRING, exp=()}
