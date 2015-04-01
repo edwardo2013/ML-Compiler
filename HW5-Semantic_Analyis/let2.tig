@@ -1,0 +1,8 @@
+let
+ type pos = int
+ type ed = int
+ var a : pos := 5
+ var b : ed := 43
+in
+ a + b
+end
