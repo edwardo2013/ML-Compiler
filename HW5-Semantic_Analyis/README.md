@@ -1,3 +1,5 @@
+HW Completed as described [here](http://ccom.uprrp.edu/~humberto/pages/teaching/compilers/semantic.html).
+Just the bare minimum is completed. 
 
 To run a semantic analysis:
 
