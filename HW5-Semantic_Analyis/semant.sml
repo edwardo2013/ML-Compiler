@@ -68,15 +68,17 @@ struct
 
     let fun trexp (A.OpExp{left, oper, right, pos}) =
 
+      (*in this case, must be integer*)
       if oper = A.PlusOp orelse oper = A.MinusOp orelse oper = A.TimesOp orelse oper = A.DivideOp then
         (checkInt (trexp left, pos);
         checkInt (trexp right, pos);
         {ty=Types.INT, exp=()})
 
+        (*Added string comparison, it can be integer or string for this opers*)
       else if oper = A.EqOp orelse oper = A.NeqOp orelse oper = A.LeOp orelse oper = A.LtOp 
               orelse oper = A.GeOp orelse oper = A.GtOp then
          let
-            val l = trexp left
+            val l = trexp left (*find what exp is *)
             val r = trexp right
           in
             (case #ty l of
@@ -87,7 +89,7 @@ struct
              | Types.STRING =>
                 (checkString(l, pos);
                 checkString(r, pos);
-                {ty=Types.INT,exp= ()}) (*should be int because a comparison is 1 or 0 *)  
+                {ty=Types.INT,exp= ()}) (*should be int because a comparison is 1 or 0, not sure*)  
              | _ => (ErrorMsg.error pos "can't perform comparisons on this type";
                   {ty=Types.INT, exp= ()}))
            end 
@@ -111,7 +113,7 @@ struct
             else
               {exp= (), ty=Types.UNIT} (*good assigment, just gives a unit type*)
           end 
-       | trexp (A.LetExp {decs, body, pos}) = (*made by prof. Ortiz*)
+       | trexp (A.LetExp {decs, body, pos}) = (*made by prof. H. Ortiz*)
             let
 		          fun delosenv (venv, tenv, nil) = {tenv=tenv, venv=venv}
 		            | delosenv (venv, tenv, dec::decs) =
@@ -137,7 +139,7 @@ struct
             in
               seq_list (exps)
           end
-       (*Other cases not needed for the assigment*)   
+       (*Other cases not needed for this homework*)   
        | trexp _ = {ty=Types.UNIT, exp=ErrorMsg.error 0 "Can't typecheck this yet in trexp"}
 
       (*lvalue case*) 
