@@ -139,6 +139,7 @@ struct
             in
               seq_list (exps)
           end
+        | trexp(A.CallExp{func,args,pos}) = trfun(func,args,pos) 
        (*Other cases not needed for this homework*)   
        | trexp _ = {ty=Types.UNIT, exp=ErrorMsg.error 0 "Can't typecheck this yet in trexp"}
 
@@ -150,6 +151,27 @@ struct
 
         (*only simple case is implemented*)
         | trvar _ = {ty=Types.UNIT, exp=ErrorMsg.error 0 "Can't typecheck this yet in trvar"}
+
+    and trfun (func, args, pos) = 
+            let 
+              fun matchArgs([], [], pos) = ()
+                | matchArgs([], args, pos) = ErrorMsg.error pos "too many args"
+                | matchArgs(formals, [], pos) = ErrorMsg.error pos "not enough args"
+                | matchArgs(formal::formals, arg::args, pos) = 
+                  (let val {exp, ty} = trexp arg
+                   in if formal = ty
+                      then ()
+                      else ErrorMsg.error pos "argument is incorrect type"
+                   end;
+                   matchArgs(formals, args, pos))
+            in
+              (case Symbol.look(venv, func)
+                of NONE => (ErrorMsg.error pos ("undefined function " ^
+                                                Symbol.name(func));
+                            {exp=(), ty=Types.UNIT})
+                 | SOME(Env.FunEntry {formals, result}) =>
+                     (matchArgs(formals, args, pos); {exp=(), ty=actual_ty(result)}))
+            end
       
     in
       trexp
@@ -181,6 +203,26 @@ struct
             venv = venv} 
         | transDec(venv, tenv, A.TypeDec({name, ty, pos}::typs)) = (*recursive case*)
             transDec(venv, Symbol.enter(tenv, name, transTy(tenv, ty)), A.TypeDec(typs))
+
+         (*trans dec for funcitons declarations*)   
+        | transDec(venv, tenv, A.FunctionDec([])) = {tenv = tenv, venv = venv}
+        | transDec(venv, tenv, A.FunctionDec[{name, params, body, pos, result=SOME(rt,pos1)}]) =
+        let val result_ty = case Symbol.look(tenv, rt) of 
+                              SOME(res) => res
+                            | NONE => Types.UNIT (*poenr error aqui*)
+          fun transparam {name, escape, typ, pos} = 
+            case Symbol.look(tenv, typ) of
+               SOME t => {name=name, ty=t}
+            |  NONE => (ErrorMsg.error pos "type undefined"; {name=name, ty=Types.UNIT})
+          val params' = map transparam params (* params' is the a list (each el is a record) of {name, ty} of each parameter*)
+          val venv' = Symbol.enter(venv, name, 
+              Env.FunEntry{formals = map #ty params', result = result_ty})
+          fun enterparam ({name, ty}, venv) = 
+              Symbol.enter (venv, name, Env.VarEntry{ty=ty})
+          val venv'' = foldr enterparam venv' params'
+        in transExp(venv'', tenv) body;
+          {venv=venv', tenv=tenv}
+        end
 
         | transDec (venv,tenv, _ ) = (ErrorMsg.error 0 "Can't typecheck this yet in transDec"; {venv=venv,tenv=tenv})
 end
